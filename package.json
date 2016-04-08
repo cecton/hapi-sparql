@@ -9,6 +9,9 @@
     "test:cov": "isparta cover _mocha --root src --include-all-sources -- --compilers js:babel-core/register --recursive",
     "lint": "standard || exit 0"
   },
+  "standard": {
+    "parser": "babel-eslint"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cecton/hapi-sparql.git"

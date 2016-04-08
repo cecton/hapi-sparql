@@ -1,8 +1,7 @@
 import {expect} from 'chai'
 import Hapi from 'hapi'
-import {SparqlClient, register} from '../src/index'
+import {register} from '../src/index'
 import parallel from 'mocha.parallel'
-import SparqlHttp from 'sparql-http-client'
 
 /*
  * NOTE: you should use parallel here and not describe, otherwise the
@@ -13,21 +12,14 @@ import SparqlHttp from 'sparql-http-client'
  */
 
 parallel('hapi-sparql', () => {
-
   const request = (method, url, headers, content, callback) => {
-      callback(null, {
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: {
-          status: 'ok',
-          method: method,
-          url: url,
-          headers: headers,
-          content: content
-        }
-      })
-    }
+    callback(null, {
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: {method, url, headers, content}
+    })
+  }
 
   const constructQuery = 'CONSTRUCT {?s ?p ?o} WHERE {?s ?p ?o}'
   const selectQuery = 'SELECT * WHERE {?s ?p ?o}'
@@ -48,7 +40,7 @@ parallel('hapi-sparql', () => {
     const server = new Hapi.Server()
     server.connection()
     server.register({
-      register: register,
+      register,
       options: {
         request: request,
         endpointUrl: 'http://example.org/sparql'
@@ -108,7 +100,7 @@ parallel('hapi-sparql', () => {
       register: register,
       options: {
         request: request,
-        endpointUrl: 'http://example.org/sparql',
+        endpointUrl: 'http://example.org/sparql'
       }
     }, (err) => {
       expect(err).to.be.not.ok
@@ -125,7 +117,7 @@ parallel('hapi-sparql', () => {
       })
       server.inject({
         method: 'GET',
-        url: '/?s=foo&p=bar&o=baz',
+        url: '/?s=foo&p=bar&o=baz'
       }, (res) => {
         expect(res.result.url).to.be.equal(
           'http://example.org/sparql?query=' +
@@ -205,7 +197,7 @@ parallel('hapi-sparql', () => {
       register: register,
       options: {
         request: request,
-        endpointUrl: 'http://example.org/sparql',
+        endpointUrl: 'http://example.org/sparql'
       }
     }, (err) => {
       expect(err).to.be.not.ok
@@ -228,5 +220,4 @@ parallel('hapi-sparql', () => {
       })
     })
   })
-
 })

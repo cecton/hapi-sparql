@@ -2,8 +2,10 @@
   "name": "hapi-sparql",
   "version": "0.1.0",
   "description": "A simple Hapi SPARQL connection plugin",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
+    "build": "babel src --out-dir dist",
+    "prepublish": "npm run build",
     "test": "mocha --compilers js:babel-core/register --recursive",
     "test:watch": "npm run test -- --watch",
     "test:cov": "isparta cover _mocha --root src --include-all-sources -- --compilers js:babel-core/register --recursive",
@@ -13,6 +15,9 @@
     "parser": "babel-eslint",
     "globals": [
       "it"
+    ],
+    "ignore": [
+      "dist"
     ]
   },
   "repository": {

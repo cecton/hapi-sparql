@@ -7,10 +7,13 @@
     "test": "mocha --compilers js:babel-core/register --recursive",
     "test:watch": "npm run test -- --watch",
     "test:cov": "isparta cover _mocha --root src --include-all-sources -- --compilers js:babel-core/register --recursive",
-    "lint": "standard || exit 0"
+    "lint": "standard"
   },
   "standard": {
-    "parser": "babel-eslint"
+    "parser": "babel-eslint",
+    "globals": [
+      "it"
+    ]
   },
   "repository": {
     "type": "git",

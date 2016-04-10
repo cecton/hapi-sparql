@@ -13,6 +13,7 @@ install:
 script:
   - npm run lint
   - npm run test:cov
+  - npm run build
 
 after_script:
   - codeclimate-test-reporter < coverage/lcov.info

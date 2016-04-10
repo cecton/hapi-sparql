@@ -63,12 +63,13 @@ export class SparqlClient {
           if (response.statusCode >= 300) {
             this._server.log(['hapi-sparql', 'error'],
               'results body:\n' + response.body)
-            reply(Boom.create(response.statusCode, response.statusMessage))
+            reply(Boom.create(response.statusCode, response.body))
           } else {
             this._server.log(['hapi-sparql', 'debug'],
               'results body:\n' + response.body)
             reply(response.body)
               .type(response.headers['content-type'])
+              .code(response.statusCode)
           }
         },
         queryOptions)

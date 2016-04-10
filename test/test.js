@@ -17,10 +17,12 @@ parallel('hapi-sparql', () => {
       headers: {
         'content-type': 'application/json'
       },
-      body: {method, url, headers, content}
+      body: {method, url, headers, content},
+      statusCode: 202
     })
   }
 
+  const endpointUrl = 'http://example.org/sparql'
   const constructQuery = 'CONSTRUCT {?s ?p ?o} WHERE {?s ?p ?o}'
   const selectQuery = 'SELECT * WHERE {?s ?p ?o}'
   const updateQuery = 'INSERT {<http://example.org/subject> <http://example.org/predicate> "object"} WHERE {}'
@@ -28,7 +30,7 @@ parallel('hapi-sparql', () => {
   it('should reject invalid options', (done) => {
     const server = new Hapi.Server()
     server.register({
-      register: register,
+      register,
       options: {}
     }, (err) => {
       expect(err).to.be.ok
@@ -41,17 +43,14 @@ parallel('hapi-sparql', () => {
     server.connection()
     server.register({
       register,
-      options: {
-        request: request,
-        endpointUrl: 'http://example.org/sparql'
-      }
+      options: {request, endpointUrl}
     }, (err) => {
       expect(err).to.be.not.ok
       server.route({
         method: 'GET',
         path: '/',
         handler: {
-          'sparql': {
+          sparql: {
             type: 'update',
             query: updateQuery
           }
@@ -68,10 +67,10 @@ parallel('hapi-sparql', () => {
     const server = new Hapi.Server()
     server.connection()
     server.register({
-      register: register,
+      register,
       options: {
-        request: request,
-        endpointUrl: 'http://example.org/sparql',
+        request,
+        endpointUrl,
         updateUrl: 'http://another.org/sparql'
       }
     }, (err) => {
@@ -80,7 +79,7 @@ parallel('hapi-sparql', () => {
         method: 'GET',
         path: '/',
         handler: {
-          'sparql': {
+          sparql: {
             type: 'update',
             query: updateQuery
           }
@@ -97,18 +96,15 @@ parallel('hapi-sparql', () => {
     const server = new Hapi.Server()
     server.connection()
     server.register({
-      register: register,
-      options: {
-        request: request,
-        endpointUrl: 'http://example.org/sparql'
-      }
+      register,
+      options: {request, endpointUrl}
     }, (err) => {
       expect(err).to.be.not.ok
       server.route({
         method: 'GET',
         path: '/',
         handler: {
-          'sparql': {
+          sparql: {
             type: 'select',
             query: selectQuery,
             placeholders: ['s', 'o']
@@ -131,25 +127,23 @@ parallel('hapi-sparql', () => {
     const server = new Hapi.Server()
     server.connection()
     server.register({
-      register: register,
-      options: {
-        request: request,
-        endpointUrl: 'http://example.org/sparql',
-        updateUrl: 'http://another.org/sparql'
-      }
+      register,
+      options: {request, endpointUrl}
     }, (err) => {
       expect(err).to.be.not.ok
       server.route({
         method: 'GET',
         path: '/',
         handler: {
-          'sparql': {
+          sparql: {
             type: 'select',
             query: selectQuery
           }
         }
       })
       server.inject('/', (res) => {
+        expect(res.statusCode).to.be.equal(202)
+        expect(res.headers['content-type']).to.match(/application\/json/)
         expect(res.result.method).to.be.equal('GET')
         expect(res.result.url).to.be.equal(
           'http://example.org/sparql?query=' + encodeURIComponent(selectQuery))
@@ -162,25 +156,23 @@ parallel('hapi-sparql', () => {
     const server = new Hapi.Server()
     server.connection()
     server.register({
-      register: register,
-      options: {
-        request: request,
-        endpointUrl: 'http://example.org/sparql',
-        updateUrl: 'http://another.org/sparql'
-      }
+      register,
+      options: {request, endpointUrl}
     }, (err) => {
       expect(err).to.be.not.ok
       server.route({
         method: 'GET',
         path: '/',
         handler: {
-          'sparql': {
+          sparql: {
             type: 'construct',
             query: constructQuery
           }
         }
       })
       server.inject('/', (res) => {
+        expect(res.statusCode).to.be.equal(202)
+        expect(res.headers['content-type']).to.match(/application\/json/)
         expect(res.result.method).to.be.equal('GET')
         expect(res.result.url).to.be.equal(
           'http://example.org/sparql?query=' +
@@ -194,10 +186,49 @@ parallel('hapi-sparql', () => {
     const server = new Hapi.Server()
     server.connection()
     server.register({
-      register: register,
+      register,
+      options: {request, endpointUrl}
+    }, (err) => {
+      expect(err).to.be.not.ok
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: {
+          sparql: {
+            type: 'update',
+            query: updateQuery
+          }
+        }
+      })
+      server.inject('/', (res) => {
+        expect(res.statusCode).to.be.equal(202)
+        expect(res.headers['content-type']).to.match(/application\/json/)
+        expect(res.result.method).to.be.equal('POST')
+        expect(res.result.url).to.be.equal('http://example.org/sparql')
+        expect(res.result.content).to.be.equal(
+          'query=' + encodeURIComponent(updateQuery))
+        done()
+      })
+    })
+  })
+
+  it('forwards failed response of failed request', (done) => {
+    const failingRequest = (method, url, headers, content, callback) => {
+      callback(null, {
+        headers: {
+          'content-type': 'text/plain'
+        },
+        body: 'invalid query',
+        statusCode: 406
+      })
+    }
+    const server = new Hapi.Server()
+    server.connection()
+    server.register({
+      register,
       options: {
-        request: request,
-        endpointUrl: 'http://example.org/sparql'
+        request: failingRequest,
+        endpointUrl
       }
     }, (err) => {
       expect(err).to.be.not.ok
@@ -205,17 +236,16 @@ parallel('hapi-sparql', () => {
         method: 'GET',
         path: '/',
         handler: {
-          'sparql': {
-            type: 'update',
-            query: updateQuery
+          sparql: {
+            type: 'select',
+            query: selectQuery
           }
         }
       })
       server.inject('/', (res) => {
-        expect(res.result.method).to.be.equal('POST')
-        expect(res.result.url).to.be.equal('http://example.org/sparql')
-        expect(res.result.content).to.be.equal(
-          'query=' + encodeURIComponent(updateQuery))
+        expect(res.result.statusCode).to.be.equal(406)
+        expect(res.headers['content-type']).to.match(/application\/json/)
+        expect(res.result.message).to.be.equal('invalid query')
         done()
       })
     })

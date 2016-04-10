@@ -1,6 +1,6 @@
 {
   "name": "hapi-sparql",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A simple Hapi SPARQL connection plugin",
   "main": "dist/index.js",
   "scripts": {
@@ -35,22 +35,23 @@
   },
   "homepage": "https://github.com/cecton/hapi-sparql#readme",
   "dependencies": {
-    "babel-cli": "^6.7.5",
-    "babel-core": "^6.7.4",
-    "babel-preset-es2015": "^6.6.0",
-    "babel-preset-stage-1": "^6.5.0",
-    "boom": "^3.1.2",
-    "hapi": "^13.3.0",
-    "joi": "^8.0.5",
     "sparql-http-client": "^0.1.0"
   },
   "devDependencies": {
+    "babel-cli": "^6.7.5",
+    "babel-core": "^6.7.4",
     "babel-eslint": "^6.0.2",
+    "babel-preset-es2015": "^6.6.0",
+    "babel-preset-stage-1": "^6.5.0",
     "chai": "^3.5.0",
     "isparta": "^4.0.0",
     "mocha": "^2.4.5",
     "mocha.parallel": "^0.12.0",
-    "nodemon": "^1.9.1",
     "standard": "^6.0.8"
+  },
+  "peerDependencies": {
+    "boom": ">= 3.x.x",
+    "hapi": ">= 13.x.x",
+    "joi": ">= 8.x.x"
   }
 }

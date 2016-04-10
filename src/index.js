@@ -86,9 +86,6 @@ exports.register = (server, pluginOptions, next) => {
     const sparql = new SparqlClient(server, options)
     server.handler('sparql', sparql.handler)
     server.expose('endpoint', sparql.endpoint)
-    if (options.testing) {
-      server.expose('client', sparql)
-    }
     return next()
   })
 }

@@ -250,4 +250,35 @@ parallel('hapi-sparql', () => {
       })
     })
   })
+
+  it('returns 500 if the connection fails', (done) => {
+    const failingRequest = (method, url, headers, content, callback) => {
+      callback(new Error('Connection failed'), null)
+    }
+    const server = new Hapi.Server()
+    server.connection()
+    server.register({
+      register,
+      options: {
+        request: failingRequest,
+        endpointUrl
+      }
+    }, (err) => {
+      expect(err).to.be.not.ok
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: {
+          sparql: {
+            type: 'select',
+            query: selectQuery
+          }
+        }
+      })
+      server.inject('/').catch((err) => {
+        expect(err.message).to.be.equal('Connection failed')
+        done()
+      })
+    })
+  })
 })

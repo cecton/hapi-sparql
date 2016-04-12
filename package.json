@@ -1,6 +1,6 @@
 {
   "name": "hapi-sparql",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A simple Hapi SPARQL connection plugin",
   "main": "dist/index.js",
   "scripts": {

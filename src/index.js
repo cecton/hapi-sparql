@@ -19,9 +19,14 @@ export class SparqlClient {
     this.endpoint = new SparqlHttp(options)
   }
 
+  escape_string (string) {
+    return '"' + string.replace(/[\\"']/g, '\\$&') + '"'
+  }
+
   bind (query, key, value) {
-    // TODO: need escaping
-    return query.replace(new RegExp(`\\?${key}\\b`, 'g'), value)
+    return query.replace(
+      new RegExp(`\\?${key}\\b`, 'g'),
+      this.escape_string(value))
   }
 
   bindParams (query, params, placeholders) {

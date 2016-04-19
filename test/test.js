@@ -117,7 +117,7 @@ parallel('hapi-sparql', () => {
       }, (res) => {
         expect(res.result.url).to.be.equal(
           'http://example.org/sparql?query=' +
-          encodeURIComponent('SELECT * WHERE {foo ?p baz}'))
+          encodeURIComponent('SELECT * WHERE {"foo" ?p "baz"}'))
         done()
       })
     })
@@ -277,6 +277,37 @@ parallel('hapi-sparql', () => {
       })
       server.inject('/').catch((err) => {
         expect(err.message).to.be.equal('Connection failed')
+        done()
+      })
+    })
+  })
+
+  it('escapes user arguments', (done) => {
+    const server = new Hapi.Server()
+    server.connection()
+    server.register({
+      register,
+      options: {request, endpointUrl}
+    }, (err) => {
+      expect(err).to.be.not.ok
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: {
+          sparql: {
+            type: 'select',
+            query: selectQuery,
+            placeholders: ['o']
+          }
+        }
+      })
+      server.inject({
+        method: 'GET',
+        url: '/?o=' + encodeURIComponent('foo\"bar\\baz\'')
+      }, (res) => {
+        expect(res.result.url).to.be.equal(
+          'http://example.org/sparql?query=' +
+          encodeURIComponent('SELECT * WHERE {?s ?p "foo\\"bar\\\\baz\\\'"}'))
         done()
       })
     })

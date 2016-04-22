@@ -56,11 +56,7 @@ export class SparqlClient {
         Object.keys(params)
       )
       .reduce((prev, value) => {
-        return (
-          params[value] === undefined
-            ? prev
-            : this.bind(prev, value, params[value], Joi.reach(schema, value))
-        )
+        return this.bind(prev, value, params[value], Joi.reach(schema, value))
       })
   }
 

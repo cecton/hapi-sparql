@@ -38,8 +38,8 @@ describe('hapi-sparql\'s escaping', () => {
   })
 
   it('escapes booleans', () => {
-    expect(testBind(true, Joi.number().integer())).to.be.equal('true')
-    expect(testBind(false, Joi.number().integer())).to.be.equal('false')
+    expect(testBind(true, Joi.boolean())).to.be.equal('true')
+    expect(testBind(false, Joi.boolean())).to.be.equal('false')
   })
 
   it('escapes numbers', () => {
@@ -57,6 +57,10 @@ describe('hapi-sparql\'s escaping', () => {
       Joi.string().isoDate())).to.be.equal('"foo"^^xsd:dateTime')
     expect(testBind(now,
       Joi.date())).to.be.equal(`"${now.toISOString()}"^^xsd:dateTime`)
+  })
+
+  it('can\'t escapes something not handled', () => {
+    expect(testBind.bind(null, 'foo', Joi.object())).to.throw()
   })
 
   it('can\'t escapes something not handled', () => {

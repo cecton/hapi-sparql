@@ -181,7 +181,12 @@ parallel('hapi-sparql plugin', () => {
           }
         }
       })
-      server.inject('/', (res) => {
+      server.inject({
+        url: '/',
+        headers: {
+          accept: '*/*'
+        }
+      }, (res) => {
         expect(res.statusCode).to.be.equal(202)
         expect(res.headers['content-type']).to.match(/application\/json/)
         expect(res.result.method).to.be.equal('GET')

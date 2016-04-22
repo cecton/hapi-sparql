@@ -25,6 +25,8 @@ export class SparqlClient {
     switch (schema._type) {
       case 'string':
         if (tests.indexOf('isoDate') > -1) {
+          // NOTE: the schema is been validated by Hapi before, no need to
+          // escape the value here
           return `"${value}"^^xsd:dateTime`
         } else if (tests.indexOf('uri') > -1) {
           return `<${value}>`

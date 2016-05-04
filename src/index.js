@@ -1,6 +1,7 @@
 import Boom from 'boom'
 import Joi from 'joi'
 import SparqlHttp from 'sparql-http-client'
+import {escapeBoolean, escapeDate, escapeString} from './escaping'
 
 const optionsSchema = Joi.object({
   testing: Joi.boolean(),
@@ -19,20 +20,45 @@ export class SparqlClient {
     this.endpoint = new SparqlHttp(options)
   }
 
-  bind (query, key, value) {
-    // TODO: need escaping
-    return query.replace(new RegExp(`\\?${key}\\b`, 'g'), value)
+  escape (value, schema) {
+    const tests = schema._tests.map((test) => { return test.name })
+    switch (schema._type) {
+      case 'string':
+        if (tests.indexOf('isoDate') > -1) {
+          // NOTE: the schema is been validated by Hapi before, no need to
+          // escape the value here
+          return `"${value}"^^xsd:dateTime`
+        } else if (tests.indexOf('uri') > -1) {
+          return `<${value}>`
+        } else {
+          return escapeString(value)
+        }
+      case 'date':
+        return escapeDate(value)
+      case 'boolean':
+        return escapeBoolean(value)
+      case 'number':
+        return String(value)
+      default:
+        throw new Error(
+          'conversion of query argument of type ' +
+          ` "${schema._type}" not implemented`)
+    }
   }
 
-  bindParams (query, params, placeholders) {
+  bind = (query, key, value, schema) => {
+    return query.replace(
+      new RegExp(`\\?${key}\\b`, 'g'),
+      this.escape(value, schema))
+  }
+
+  bindParams = (query, params, schema) => {
     return [query]
       .concat(
-        placeholders !== undefined ? placeholders : Object.keys(params)
+        Object.keys(params)
       )
       .reduce((prev, value) => {
-        return params[value] === undefined
-          ? prev
-          : this.bind(prev, value, params[value])
+        return this.bind(prev, value, params[value], Joi.reach(schema, value))
       })
   }
 
@@ -47,12 +73,12 @@ export class SparqlClient {
 
   handler = (route, routeOptions) => {
     return (request, reply) => {
-      const {type, query, placeholders, ...queryOptions} = routeOptions
+      const {type, query, ...queryOptions} = routeOptions
       if (request.headers.accept !== '*/*') {
         queryOptions.accept = request.headers.accept
       }
       this.send(type,
-        this.bindParams(query, request.query, placeholders || []),
+        this.bindParams(query, request.query, route.settings.validate.query),
         (error, response) => {
           if (error) {
             // NOTE: unhandled HTTP exception, just throw it to get a 500
@@ -86,6 +112,8 @@ exports.register = (server, pluginOptions, next) => {
     const sparql = new SparqlClient(server, options)
     server.handler('sparql', sparql.handler)
     server.expose('endpoint', sparql.endpoint)
+    server.expose('bind', sparql.bind)
+    server.expose('bindParams', sparql.bindParams)
     return next()
   })
 }

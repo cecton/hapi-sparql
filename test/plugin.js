@@ -1,5 +1,6 @@
 import {expect} from 'chai'
 import Hapi from 'hapi'
+import Joi from 'joi'
 import {register} from '../src/index'
 import parallel from 'mocha.parallel'
 
@@ -11,7 +12,7 @@ import parallel from 'mocha.parallel'
  *
  */
 
-parallel('hapi-sparql', () => {
+parallel('hapi-sparql plugin', () => {
   const request = (method, url, headers, content, callback) => {
     callback(null, {
       headers: {
@@ -106,18 +107,28 @@ parallel('hapi-sparql', () => {
         handler: {
           sparql: {
             type: 'select',
-            query: selectQuery,
-            placeholders: ['s', 'o']
+            query: selectQuery
+          }
+        },
+        config: {
+          validate: {
+            query: {
+              p: Joi.string().uri(),
+              o: Joi.string()
+            }
           }
         }
       })
       server.inject({
         method: 'GET',
-        url: '/?s=foo&p=bar&o=baz'
+        url: '/?' +
+          'p=' + encodeURIComponent('http://example.org') +
+          '&o=' + encodeURIComponent('foo\nbar\rbaz')
       }, (res) => {
-        expect(res.result.url).to.be.equal(
-          'http://example.org/sparql?query=' +
-          encodeURIComponent('SELECT * WHERE {foo ?p baz}'))
+        expect(res.statusCode).to.be.equal(202, res.result.message)
+        const query = res.result.url.match(/\?query=(.+)/)[1]
+        expect(decodeURIComponent(query)).to.be.equal(
+          'SELECT * WHERE {?s <http://example.org> "foo\\nbar\\rbaz"}')
         done()
       })
     })
@@ -170,7 +181,12 @@ parallel('hapi-sparql', () => {
           }
         }
       })
-      server.inject('/', (res) => {
+      server.inject({
+        url: '/',
+        headers: {
+          accept: '*/*'
+        }
+      }, (res) => {
         expect(res.statusCode).to.be.equal(202)
         expect(res.headers['content-type']).to.match(/application\/json/)
         expect(res.result.method).to.be.equal('GET')

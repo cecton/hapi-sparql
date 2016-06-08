@@ -73,7 +73,7 @@ export class SparqlClient {
 
   handler = (route, routeOptions) => {
     return (request, reply) => {
-      const {type, query, ...queryOptions} = routeOptions
+      const {type, query, headers, ...queryOptions} = routeOptions
       if (request.headers.accept !== '*/*') {
         queryOptions.accept = request.headers.accept
       }
@@ -93,9 +93,14 @@ export class SparqlClient {
           } else {
             this._server.log(['hapi-sparql', 'debug'],
               'results body:\n' + response.body)
-            reply(response.body)
-              .type(response.headers['content-type'])
-              .code(response.statusCode)
+            const routeResponse = reply(response.body)
+            routeResponse.type(response.headers['content-type'])
+            if (headers !== undefined) {
+              for (const key of Object.keys(headers)) {
+                routeResponse.header(key, headers[key])
+              }
+            }
+            routeResponse.code(response.statusCode)
           }
         },
         queryOptions)

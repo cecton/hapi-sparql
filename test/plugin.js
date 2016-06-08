@@ -297,4 +297,33 @@ parallel('hapi-sparql plugin', () => {
       })
     })
   })
+
+  it('returns headers in response', (done) => {
+    const server = new Hapi.Server()
+    server.connection()
+    server.register({
+      register,
+      options: {request, endpointUrl}
+    }, (err) => {
+      expect(err).to.be.not.ok
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: {
+          sparql: {
+            type: 'select',
+            query: selectQuery,
+            headers: {
+              'Content-Disposition': 'attachment'
+            }
+          }
+        }
+      })
+      server.inject('/', (res) => {
+        expect(res.statusCode).to.be.equal(202)
+        expect(res.headers['content-disposition']).to.be.equal('attachment')
+        done()
+      })
+    })
+  })
 })
